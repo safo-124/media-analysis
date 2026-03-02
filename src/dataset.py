@@ -140,6 +140,9 @@ class JudoThrowsDataset(Dataset):
                 continue
 
             for filename in sorted(os.listdir(class_dir)):
+                # Skip macOS metadata files and hidden files
+                if filename.startswith('.'):
+                    continue
                 # Only include video files
                 if filename.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
                     video_path = os.path.join(class_dir, filename)
@@ -166,7 +169,12 @@ class JudoThrowsDataset(Dataset):
 
         # Step 1: Decode video and sample frames
         # Result shape: (T, H, W, C) = (16, orig_H, orig_W, 3)
-        frames = decode_video(video_path, NUM_FRAMES)
+        try:
+            frames = decode_video(video_path, NUM_FRAMES)
+        except Exception as e:
+            print(f"WARNING: Failed to load {video_path}: {e}")
+            # Return a black video as fallback for corrupt files
+            frames = np.zeros((NUM_FRAMES, CROP_SIZE, CROP_SIZE, 3), dtype=np.uint8)
 
         # Step 2: Convert to tensor and rearrange dimensions
         # From numpy (T, H, W, C) uint8 → torch (T, C, H, W) float32 [0, 1]
