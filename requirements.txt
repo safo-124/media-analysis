@@ -1,0 +1,12 @@
+torch
+torchvision
+torchaudio
+pytorchvideo
+av
+opencv-python
+scikit-learn
+matplotlib
+tqdm
+tensorboard
+huggingface_hub
+datasets
