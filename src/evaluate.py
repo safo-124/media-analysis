@@ -36,7 +36,7 @@ from tqdm import tqdm
 
 # Import our configuration
 import sys
-sys.path.insert(0, os.path.join("e:", os.sep, "media analysis"))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from configs.config import DEVICE, OUTPUT_DIR, CLASS_NAMES, NUM_CLASSES
 
 

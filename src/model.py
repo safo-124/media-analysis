@@ -67,7 +67,7 @@ import torch.nn as nn
 # Import our configuration
 import sys
 import os
-sys.path.insert(0, os.path.join("e:", os.sep, "media analysis"))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from configs.config import NUM_CLASSES, MODEL_NAME, PRETRAINED, FREEZE_BACKBONE, DEVICE
 
 

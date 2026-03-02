@@ -38,7 +38,7 @@ from torchvision import transforms
 
 # Import our configuration
 import sys
-sys.path.insert(0, os.path.join("e:", os.sep, "media analysis"))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from configs.config import (
     DATA_DIR, CLASS_NAMES, NUM_CLASSES, NUM_FRAMES, SAMPLING_RATE,
     CROP_SIZE, RESIZE_SHORT_SIDE, MEAN, STD,

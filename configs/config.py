@@ -20,11 +20,14 @@ import torch
 # =============================================================================
 # PATHS
 # =============================================================================
+_CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.dirname(_CONFIG_DIR)
+
 # Root of the downloaded dataset (contains train/, val/, test/ subfolders)
-DATA_DIR = os.path.join("e:", os.sep, "media analysis", "judo_throws_dataset")
+DATA_DIR = os.path.join(_PROJECT_ROOT, "judo_throws_dataset")
 
 # Where to save model checkpoints, logs, and plots
-OUTPUT_DIR = os.path.join("e:", os.sep, "media analysis", "outputs")
+OUTPUT_DIR = os.path.join(_PROJECT_ROOT, "outputs")
 
 # =============================================================================
 # DATASET SETTINGS
@@ -72,8 +75,8 @@ HORIZONTAL_FLIP_PROB = 0.5
 # MODEL SETTINGS
 # =============================================================================
 # Which X3D variant to use. Options: "x3d_xs", "x3d_s", "x3d_m", "x3d_l"
-# x3d_m is the best accuracy/efficiency tradeoff.
-MODEL_NAME = "x3d_m"
+# x3d_s is used here for memory efficiency on a 6 GB WDDM GPU.
+MODEL_NAME = "x3d_s"
 
 # Whether to load Kinetics-400 pre-trained weights.
 # ALWAYS True for fine-tuning on small datasets like ours (805 videos).
@@ -88,9 +91,8 @@ FREEZE_BACKBONE = False
 # TRAINING HYPERPARAMETERS
 # =============================================================================
 # Batch size: how many video clips per gradient update.
-# Video models are memory-hungry. Start with 4 and increase if GPU allows.
-# On CPU: use 2 to avoid running out of RAM.
-BATCH_SIZE = 4
+# Video models are memory-hungry. X3D-S with batch_size=2 fits on a 6 GB WDDM GPU.
+BATCH_SIZE = 2
 
 # Number of complete passes through the training set.
 NUM_EPOCHS = 25

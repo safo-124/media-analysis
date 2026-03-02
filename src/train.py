@@ -50,7 +50,7 @@ from tqdm import tqdm
 
 # Import our configuration
 import sys
-sys.path.insert(0, os.path.join("e:", os.sep, "media analysis"))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from configs.config import (
     DEVICE, NUM_EPOCHS, LEARNING_RATE, WEIGHT_DECAY,
     LR_SCHEDULER_PATIENCE, LR_SCHEDULER_FACTOR,
@@ -249,6 +249,9 @@ def train(model, dataloaders):
         model: The best model (loaded from checkpoint)
         history: Dict with training metrics for plotting
     """
+    # Ensure output directory exists before saving checkpoints
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     print(f"\n{'='*60}")
     print("TRAINING CONFIGURATION")
     print(f"{'='*60}")
@@ -283,7 +286,6 @@ def train(model, dataloaders):
         mode='min',           # We want to MINIMIZE val loss
         patience=LR_SCHEDULER_PATIENCE,
         factor=LR_SCHEDULER_FACTOR,
-        verbose=True          # Print when LR changes
     )
 
     # =========================================================================
