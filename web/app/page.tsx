@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -591,6 +592,294 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* ================================================================== */}
+      {/* MODEL ANALYSIS SECTION                                            */}
+      {/* ================================================================== */}
+      <section className="w-full max-w-5xl mt-24 space-y-10 animate-fade-in">
+        {/* Section heading */}
+        <div className="text-center">
+          <span className="text-xs font-mono tracking-widest text-[var(--accent)] uppercase">
+            Training Analysis
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mt-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            Why X3D-S Outperforms X3D-M
+          </h2>
+          <p className="text-[var(--text-muted)] mt-3 max-w-2xl mx-auto leading-relaxed">
+            With only ~600 training videos (~150 per class), the larger X3D-M
+            model <strong className="text-amber-400">memorizes</strong> the
+            training data instead of learning generalizable patterns — a
+            classic case of <strong className="text-amber-400">overfitting</strong>.
+          </p>
+        </div>
+
+        {/* Key stats comparison */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            {
+              model: "X3D-S",
+              acc: "88.1%",
+              verdict: "Recommended",
+              color: "from-cyan-500 to-blue-600",
+              tag: "text-emerald-400",
+              tagBg: "bg-emerald-500/10 border-emerald-500/20",
+              details: [
+                "Smaller capacity → less overfitting",
+                "Smooth validation loss convergence",
+                "Best F1: Osoto Gari (0.98)",
+                "Weakest: Uchi Mata (recall 0.73)",
+              ],
+            },
+            {
+              model: "X3D-M",
+              acc: "75.2%",
+              verdict: "Overfits",
+              color: "from-fuchsia-500 to-violet-600",
+              tag: "text-amber-400",
+              tagBg: "bg-amber-500/10 border-amber-500/20",
+              details: [
+                "Too powerful for ~600 videos",
+                "Validation loss oscillates wildly",
+                "Train acc reaches ~100% (memorization)",
+                "Weakest: O Goshi (F1 0.57)",
+              ],
+            },
+          ].map((m) => (
+            <div key={m.model} className="glass rounded-3xl overflow-hidden">
+              <div className={`h-1.5 bg-gradient-to-r ${m.color}`} />
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold">{m.model}</h3>
+                    <p className="text-3xl font-extrabold mt-1">{m.acc}</p>
+                  </div>
+                  <span
+                    className={`text-xs font-semibold px-3 py-1 rounded-full border ${m.tagBg} ${m.tag}`}
+                  >
+                    {m.verdict}
+                  </span>
+                </div>
+                <ul className="space-y-1.5">
+                  {m.details.map((d) => (
+                    <li
+                      key={d}
+                      className="text-[var(--text-muted)] text-sm flex items-start gap-2"
+                    >
+                      <span className="text-[var(--accent)] mt-0.5">›</span>
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Overfitting explanation card */}
+        <div className="glass rounded-3xl p-6 sm:p-8 border-amber-500/10">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+              <span className="text-xl">⚠</span>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-amber-400">
+                What is Overfitting?
+              </h3>
+              <p className="text-[var(--text-muted)] text-sm leading-relaxed">
+                When a model is too complex relative to the amount of training
+                data, it <em>memorizes</em> individual examples rather than
+                learning general patterns. The training accuracy shoots to ~100%
+                while validation accuracy plateaus or drops. This is exactly
+                what happened with X3D-M — the training loss converges to near
+                zero, but the validation loss remains high and oscillates wildly.
+              </p>
+              <p className="text-[var(--text-muted)] text-sm leading-relaxed">
+                <strong className="text-white/80">X3D-S</strong>, being a
+                smaller model, has less capacity to memorize and is forced to
+                learn the actual throw patterns, resulting in much better
+                generalization (88.1% vs 75.2%).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Training Curves — side by side */}
+        <div>
+          <h3 className="text-xl font-bold mb-1">Training Curves</h3>
+          <p className="text-[var(--text-muted)] text-sm mb-5">
+            Notice how X3D-M&apos;s validation loss (red) oscillates and never
+            converges, while X3D-S shows much smoother learning.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[
+              { key: "x3d_s", label: "X3D-S" },
+              { key: "x3d_m", label: "X3D-M" },
+            ].map((m) => (
+              <div key={m.key} className="glass rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+                  <span className="text-sm font-semibold">{m.label}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">
+                    training_curves.png
+                  </span>
+                </div>
+                <Image
+                  src={`/plots/${m.key}/training_curves.png`}
+                  alt={`${m.label} training curves`}
+                  width={800}
+                  height={400}
+                  className="w-full h-auto"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Confusion Matrices */}
+        <div>
+          <h3 className="text-xl font-bold mb-1">Confusion Matrices</h3>
+          <p className="text-[var(--text-muted)] text-sm mb-5">
+            X3D-S makes fewer misclassifications across all classes. X3D-M
+            particularly struggles with O Goshi (F1 = 0.57).
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[
+              { key: "x3d_s", label: "X3D-S" },
+              { key: "x3d_m", label: "X3D-M" },
+            ].map((m) => (
+              <div key={m.key} className="glass rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+                  <span className="text-sm font-semibold">{m.label}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">
+                    confusion_matrix.png
+                  </span>
+                </div>
+                <Image
+                  src={`/plots/${m.key}/confusion_matrix.png`}
+                  alt={`${m.label} confusion matrix`}
+                  width={800}
+                  height={600}
+                  className="w-full h-auto"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Per-Class Accuracy */}
+        <div>
+          <h3 className="text-xl font-bold mb-1">Per-Class Accuracy</h3>
+          <p className="text-[var(--text-muted)] text-sm mb-5">
+            X3D-S achieves consistent performance across all four throw types,
+            while X3D-M drops significantly on O Goshi.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[
+              { key: "x3d_s", label: "X3D-S" },
+              { key: "x3d_m", label: "X3D-M" },
+            ].map((m) => (
+              <div key={m.key} className="glass rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+                  <span className="text-sm font-semibold">{m.label}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">
+                    per_class_accuracy.png
+                  </span>
+                </div>
+                <Image
+                  src={`/plots/${m.key}/per_class_accuracy.png`}
+                  alt={`${m.label} per-class accuracy`}
+                  width={800}
+                  height={400}
+                  className="w-full h-auto"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Classification Report Table */}
+        <div>
+          <h3 className="text-xl font-bold mb-1">Classification Report</h3>
+          <p className="text-[var(--text-muted)] text-sm mb-5">
+            Full precision, recall, and F1 scores for each throw class.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[
+              {
+                model: "X3D-S (88.1%)",
+                accent: "from-cyan-500 to-blue-600",
+                rows: [
+                  { cls: "Ippon Seoi Nage", p: "0.81", r: "0.84", f1: "0.82" },
+                  { cls: "O Goshi", p: "0.79", r: "0.96", f1: "0.87" },
+                  { cls: "Osoto Gari", p: "1.00", r: "0.97", f1: "0.98" },
+                  { cls: "Uchi Mata", p: "0.94", r: "0.73", f1: "0.82" },
+                ],
+              },
+              {
+                model: "X3D-M (75.2%)",
+                accent: "from-fuchsia-500 to-violet-600",
+                rows: [
+                  { cls: "Ippon Seoi Nage", p: "0.68", r: "0.76", f1: "0.72" },
+                  { cls: "O Goshi", p: "0.67", r: "0.50", f1: "0.57" },
+                  { cls: "Osoto Gari", p: "0.81", r: "0.87", f1: "0.84" },
+                  { cls: "Uchi Mata", p: "0.83", r: "0.86", f1: "0.84" },
+                ],
+              },
+            ].map((m) => (
+              <div key={m.model} className="glass rounded-2xl overflow-hidden">
+                <div className={`h-1 bg-gradient-to-r ${m.accent}`} />
+                <div className="px-4 py-3 border-b border-[var(--border)]">
+                  <span className="text-sm font-semibold">{m.model}</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[var(--text-muted)] text-xs">
+                        <th className="text-left px-4 py-2 font-medium">Class</th>
+                        <th className="text-right px-4 py-2 font-medium">Prec</th>
+                        <th className="text-right px-4 py-2 font-medium">Recall</th>
+                        <th className="text-right px-4 py-2 font-medium">F1</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {m.rows.map((row) => (
+                        <tr key={row.cls} className="border-t border-[var(--border)]/50">
+                          <td className="px-4 py-2.5 font-medium text-white/80">{row.cls}</td>
+                          <td className="px-4 py-2.5 text-right font-mono">{row.p}</td>
+                          <td className="px-4 py-2.5 text-right font-mono">{row.r}</td>
+                          <td className="px-4 py-2.5 text-right font-mono font-bold">{row.f1}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dataset info */}
+        <div className="glass rounded-3xl p-6 sm:p-8">
+          <h3 className="text-lg font-bold mb-4">Dataset Summary</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            {[
+              { label: "Train Videos", value: "598" },
+              { label: "Val Videos", value: "102" },
+              { label: "Test Videos", value: "101" },
+              { label: "Classes", value: "4" },
+            ].map((s) => (
+              <div key={s.label} className="bg-[var(--surface-2)] rounded-xl p-4">
+                <p className="text-2xl font-extrabold">{s.value}</p>
+                <p className="text-[var(--text-muted)] text-xs mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[var(--text-muted)] text-sm mt-4 leading-relaxed">
+            The dataset contains short video clips of four judo throw techniques.
+            With ~150 videos per class, simpler architectures like X3D-S generalize
+            significantly better than larger models that tend to overfit.
+          </p>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="mt-20 text-center animate-fade-in animate-delay-400">
