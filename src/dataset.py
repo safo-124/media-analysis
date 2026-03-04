@@ -39,10 +39,11 @@ from torchvision import transforms
 # Import our configuration
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import configs.config as _cfg
 from configs.config import (
     DATA_DIR, CLASS_NAMES, NUM_CLASSES, NUM_FRAMES, SAMPLING_RATE,
     CROP_SIZE, RESIZE_SHORT_SIDE, MEAN, STD,
-    HORIZONTAL_FLIP_PROB, BATCH_SIZE, NUM_WORKERS
+    HORIZONTAL_FLIP_PROB, NUM_WORKERS
 )
 
 
@@ -250,7 +251,7 @@ def get_dataloaders():
 
         dataloaders[split] = DataLoader(
             dataset,
-            batch_size=BATCH_SIZE,
+            batch_size=_cfg.BATCH_SIZE,
             # Shuffle training data so the model doesn't memorize order
             shuffle=(split == "train"),
             num_workers=NUM_WORKERS,

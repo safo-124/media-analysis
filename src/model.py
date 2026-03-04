@@ -68,10 +68,16 @@ import torch.nn as nn
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from configs.config import NUM_CLASSES, MODEL_NAME, PRETRAINED, FREEZE_BACKBONE, DEVICE
+import configs.config as _cfg
 
 
 def build_model():
+    # Read config values dynamically so callers can override them at runtime
+    NUM_CLASSES = _cfg.NUM_CLASSES
+    MODEL_NAME = _cfg.MODEL_NAME
+    PRETRAINED = _cfg.PRETRAINED
+    FREEZE_BACKBONE = _cfg.FREEZE_BACKBONE
+    DEVICE = _cfg.DEVICE
     """
     Build and configure the X3D model for judo throw classification.
 

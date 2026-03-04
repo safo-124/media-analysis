@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #06060a;
+  --foreground: #e8e8ed;
+  --accent: #6d5aff;
+  --accent-soft: #6d5aff22;
+  --surface: #0f0f16;
+  --surface-2: #16161f;
+  --border: #1e1e2a;
+  --border-glow: #6d5aff30;
+  --text-muted: #6b6b80;
 }
 
 @theme inline {
@@ -12,15 +19,115 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
 }
+
+/* ---- Animated mesh gradient background ---- */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mesh-bg::before,
+.mesh-bg::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  animation: float 20s ease-in-out infinite alternate;
+}
+.mesh-bg::before {
+  width: 600px;
+  height: 600px;
+  background: #6d5aff;
+  top: -10%;
+  left: -5%;
+}
+.mesh-bg::after {
+  width: 500px;
+  height: 500px;
+  background: #ff5ae0;
+  bottom: -15%;
+  right: -10%;
+  animation-delay: -10s;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.1); }
+  100% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+/* ---- Glass card ---- */
+.glass {
+  background: rgba(15, 15, 22, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+}
+.glass-hover:hover {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 40px -12px rgba(109, 90, 255, 0.15);
+}
+
+/* ---- Confidence ring ---- */
+.confidence-ring {
+  --progress: 0;
+  background: conic-gradient(
+    var(--ring-color, #6d5aff) calc(var(--progress) * 1%),
+    #1e1e2a calc(var(--progress) * 1%)
+  );
+}
+
+/* ---- Pulse dot ---- */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(109, 90, 255, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(109, 90, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(109, 90, 255, 0); }
+}
+.pulse-dot {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* ---- Shimmer loading ---- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(109, 90, 255, 0.08), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ---- Score bar fill animation ---- */
+@keyframes bar-fill {
+  from { width: 0; }
+}
+.animate-bar {
+  animation: bar-fill 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ---- Fade in ---- */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+.animate-delay-100 { animation-delay: 0.1s; opacity: 0; }
+.animate-delay-200 { animation-delay: 0.2s; opacity: 0; }
+.animate-delay-300 { animation-delay: 0.3s; opacity: 0; }
+.animate-delay-400 { animation-delay: 0.4s; opacity: 0; }
