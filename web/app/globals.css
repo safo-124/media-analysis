@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #06060a;
-  --foreground: #e8e8ed;
+  --background: #ffffff;
+  --foreground: #111118;
   --accent: #6d5aff;
-  --accent-soft: #6d5aff22;
-  --surface: #0f0f16;
-  --surface-2: #16161f;
-  --border: #1e1e2a;
-  --border-glow: #6d5aff30;
-  --text-muted: #6b6b80;
+  --accent-soft: #6d5aff0d;
+  --surface: #f7f7fa;
+  --surface-2: #f0f0f5;
+  --border: #e2e2ea;
+  --border-glow: #6d5aff25;
+  --text-muted: #71717a;
 }
 
 @theme inline {
@@ -21,7 +21,7 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-color: #d4d4d8 transparent;
 }
 
 body {
@@ -53,6 +53,7 @@ body {
   background: #6d5aff;
   top: -10%;
   left: -5%;
+  opacity: 0.06;
 }
 .mesh-bg::after {
   width: 500px;
@@ -61,6 +62,7 @@ body {
   bottom: -15%;
   right: -10%;
   animation-delay: -10s;
+  opacity: 0.06;
 }
 
 @keyframes float {
@@ -71,14 +73,15 @@ body {
 
 /* ---- Glass card ---- */
 .glass {
-  background: rgba(15, 15, 22, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .glass-hover:hover {
   border-color: var(--border-glow);
-  box-shadow: 0 0 40px -12px rgba(109, 90, 255, 0.15);
+  box-shadow: 0 4px 24px -4px rgba(109, 90, 255, 0.1);
 }
 
 /* ---- Confidence ring ---- */
@@ -86,7 +89,7 @@ body {
   --progress: 0;
   background: conic-gradient(
     var(--ring-color, #6d5aff) calc(var(--progress) * 1%),
-    #1e1e2a calc(var(--progress) * 1%)
+    #e2e2ea calc(var(--progress) * 1%)
   );
 }
 

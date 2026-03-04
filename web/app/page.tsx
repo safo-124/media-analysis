@@ -123,7 +123,7 @@ function ConfidenceRing({
   const offset = circ - (pct / 100) * circ;
   return (
     <svg width={size} height={size} className="rotate-[-90deg]">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1e1e2a" strokeWidth={8} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e2e2ea" strokeWidth={8} />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -242,7 +242,7 @@ export default function Home() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#6d5aff] to-[#ff5ae0] mb-6 shadow-lg shadow-purple-500/20">
           <span className="text-3xl">🥋</span>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 via-gray-700 to-gray-500 bg-clip-text text-transparent">
           Judo Throw Classifier
         </h1>
         <p className="text-[var(--text-muted)] mt-3 text-base sm:text-lg leading-relaxed">
@@ -276,7 +276,7 @@ export default function Home() {
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
                     mode === m
                       ? "bg-[var(--accent)] text-white shadow-md shadow-purple-500/25"
-                      : "text-[var(--text-muted)] hover:text-white"
+                      : "text-[var(--text-muted)] hover:text-gray-900"
                   }`}
                 >
                   {m === "file" ? <IconUpload /> : <IconLink />}
@@ -301,7 +301,7 @@ export default function Home() {
             <div className="w-20 h-20 mx-auto rounded-2xl bg-[var(--surface-2)] flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-300">
               <span className="text-4xl">🎬</span>
             </div>
-            <p className="text-xl font-bold text-white/90">
+            <p className="text-xl font-bold text-gray-800">
               Drop your video here
             </p>
             <p className="text-[var(--text-muted)] mt-1.5">
@@ -326,11 +326,11 @@ export default function Home() {
             <video
               src={videoUrl!}
               controls
-              className="w-full max-h-72 object-contain bg-black/50"
+              className="w-full max-h-72 object-contain bg-gray-100"
             />
             <div className="p-5 flex items-center justify-between">
               <div className="min-w-0">
-                <p className="font-semibold text-white/90 truncate">
+                <p className="font-semibold text-gray-800 truncate">
                   {file.name}
                 </p>
                 <p className="text-[var(--text-muted)] text-sm">
@@ -339,7 +339,7 @@ export default function Home() {
               </div>
               <button
                 onClick={reset}
-                className="text-[var(--text-muted)] hover:text-white transition text-sm flex items-center gap-1.5"
+                className="text-[var(--text-muted)] hover:text-gray-900 transition text-sm flex items-center gap-1.5"
               >
                 <IconRefresh /> Change
               </button>
@@ -359,7 +359,7 @@ export default function Home() {
                   setError(null);
                 }}
                 placeholder="https://youtube.com/shorts/... or TikTok link"
-                className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl pl-5 pr-14 py-4 text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition font-medium"
+                className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl pl-5 pr-14 py-4 text-gray-900 placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 transition font-medium"
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                 <IconLink />
@@ -389,7 +389,7 @@ export default function Home() {
                 <video
                   src={urlInput.trim()}
                   controls
-                  className="w-full max-h-60 object-contain bg-black/50"
+                  className="w-full max-h-60 object-contain bg-gray-100"
                   onError={() => {}}
                 />
               </div>
@@ -461,7 +461,7 @@ export default function Home() {
                 <video
                   src={previewUrl}
                   controls
-                  className="w-full max-h-60 object-contain bg-black/50"
+                  className="w-full max-h-60 object-contain bg-gray-100"
                 />
                 {mode === "url" && (
                   <div className="px-5 py-3 border-t border-[var(--border)]">
@@ -556,12 +556,12 @@ export default function Home() {
                               <div key={cls}>
                                 <div className="flex justify-between text-xs mb-1.5">
                                   <span
-                                    className={`font-medium ${isTop ? "text-white" : "text-[var(--text-muted)]"}`}
+                                    className={`font-medium ${isTop ? "text-gray-900" : "text-[var(--text-muted)]"}`}
                                   >
                                     {CLASS_EMOJI[cls]} {CLASS_LABELS[cls]}
                                   </span>
                                   <span
-                                    className={`font-mono ${isTop ? "text-white font-bold" : "text-[var(--text-muted)]"}`}
+                                    className={`font-mono ${isTop ? "text-gray-900 font-bold" : "text-[var(--text-muted)]"}`}
                                   >
                                     {(score * 100).toFixed(1)}%
                                   </span>
@@ -585,7 +585,7 @@ export default function Home() {
             {/* Try another */}
             <button
               onClick={reset}
-              className="w-full py-3.5 rounded-2xl glass glass-hover text-[var(--text-muted)] hover:text-white transition-all duration-300 text-sm font-semibold flex items-center justify-center gap-2 animate-fade-in animate-delay-300"
+              className="w-full py-3.5 rounded-2xl glass glass-hover text-[var(--text-muted)] hover:text-gray-900 transition-all duration-300 text-sm font-semibold flex items-center justify-center gap-2 animate-fade-in animate-delay-300"
             >
               <IconRefresh /> Try another video
             </button>
@@ -602,7 +602,7 @@ export default function Home() {
           <span className="text-xs font-mono tracking-widest text-[var(--accent)] uppercase">
             Training Analysis
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold mt-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl sm:text-4xl font-extrabold mt-2 bg-gradient-to-r from-gray-900 to-gray-500 bg-clip-text text-transparent">
             Why X3D-S Outperforms X3D-M
           </h2>
           <p className="text-[var(--text-muted)] mt-3 max-w-2xl mx-auto leading-relaxed">
@@ -694,7 +694,7 @@ export default function Home() {
                 zero, but the validation loss remains high and oscillates wildly.
               </p>
               <p className="text-[var(--text-muted)] text-sm leading-relaxed">
-                <strong className="text-white/80">X3D-S</strong>, being a
+                <strong className="text-gray-800">X3D-S</strong>, being a
                 smaller model, has less capacity to memorize and is forced to
                 learn the actual throw patterns, resulting in much better
                 generalization (88.1% vs 75.2%).
@@ -843,7 +843,7 @@ export default function Home() {
                     <tbody>
                       {m.rows.map((row) => (
                         <tr key={row.cls} className="border-t border-[var(--border)]/50">
-                          <td className="px-4 py-2.5 font-medium text-white/80">{row.cls}</td>
+                          <td className="px-4 py-2.5 font-medium text-gray-800">{row.cls}</td>
                           <td className="px-4 py-2.5 text-right font-mono">{row.p}</td>
                           <td className="px-4 py-2.5 text-right font-mono">{row.r}</td>
                           <td className="px-4 py-2.5 text-right font-mono font-bold">{row.f1}</td>
