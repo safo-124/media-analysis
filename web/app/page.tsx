@@ -2,6 +2,9 @@
 
 import { useState, useRef, useCallback } from "react";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 /* ------------------------------------------------------------------ */
 /*  Static data                                                        */
 /* ------------------------------------------------------------------ */
@@ -188,12 +191,12 @@ export default function Home() {
       if (mode === "file" && file) {
         const form = new FormData();
         form.append("file", file);
-        res = await fetch("http://localhost:8000/compare", {
+        res = await fetch(`${API_BASE}/compare`, {
           method: "POST",
           body: form,
         });
       } else {
-        res = await fetch("http://localhost:8000/compare-url", {
+        res = await fetch(`${API_BASE}/compare-url`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: urlInput.trim() }),

@@ -1,0 +1,15 @@
+# CPU-only PyTorch + inference deps for Hugging Face Spaces
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+torchaudio
+pytorchvideo
+av
+opencv-python-headless
+numpy
+fastapi
+uvicorn[standard]
+python-multipart
+httpx
+yt-dlp
+pydantic
