@@ -226,12 +226,12 @@ def main():
                 'class_names': CLASS_NAMES,
                 'model_name': args.model,
             }, ckpt_path)
-            print(f"  ★ New best! Val Acc: {best_val_acc:.4f}")
+            print(f"  * New best! Val Acc: {best_val_acc:.4f}")
         else:
             epochs_no_improve += 1
 
         if epochs_no_improve >= EARLY_STOPPING_PATIENCE:
-            print(f"\n⚠ Early stopping at epoch {epoch+1}")
+            print(f"\n!! Early stopping at epoch {epoch+1}")
             break
 
     total_time = time.time() - total_start

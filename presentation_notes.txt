@@ -1,0 +1,559 @@
+JUDO THROW CLASSIFICATION USING X3D VIDEO MODELS
+Methodology Presentation
+==========================================================
+
+
+1. PROBLEM STATEMENT
+------------------------------------------------------------
+The goal of this project is to automatically classify judo
+throwing techniques from video. Specifically, we classify
+four fundamental throws:
+
+  - Ippon Seoi Nage (shoulder throw)
+  - O Goshi (hip throw)
+  - Osoto Gari (outer reap)
+  - Uchi Mata (inner thigh throw)
+
+This has applications in automated sports analysis, coaching
+feedback, and competition judging.
+
+
+2. DATASET
+------------------------------------------------------------
+We curated a dataset of 801 video clips across the four
+throw classes:
+
+  Split         Videos    Purpose
+  -----         ------    -------
+  Training      598       Model learning
+  Validation    102       Hyperparameter tuning & early stopping
+  Test          101       Final unbiased evaluation
+
+Each video is a short clip showing a single throw execution.
+Videos were sourced and labeled by throw type.
+
+
+3. PREPROCESSING PIPELINE
+------------------------------------------------------------
+For each video, we apply the following preprocessing:
+
+  - Uniform temporal sampling: extract 16 frames evenly
+    spaced across the video duration. This captures the
+    full motion arc of a throw.
+
+  - Spatial resize: frames resized to 224 x 224 pixels.
+
+  - Normalization: ImageNet mean and standard deviation
+    normalization (required for pretrained weights).
+
+  - Data augmentation (training only): random horizontal
+    flip, random short-side crop to introduce variability
+    and reduce overfitting.
+
+The output is a tensor of shape [3 x 16 x 224 x 224] — a
+spatiotemporal volume representing the entire throw.
+
+
+4. MODEL ARCHITECTURE — X3D
+------------------------------------------------------------
+We use X3D (Expand 3D), a family of efficient video
+classification models developed by Facebook AI Research
+(Christoph Feichtenhofer, 2020).
+
+Why 3D CNNs?
+  Unlike image classifiers (2D), 3D CNNs process both
+  spatial (what is in each frame) and temporal (how things
+  move across frames) information simultaneously. This is
+  critical for judo — the difference between throws is in
+  the motion pattern, not a single frame.
+
+Why X3D specifically?
+  X3D was designed by progressively expanding a tiny 2D
+  architecture along multiple axes (temporal, spatial,
+  width, depth). This makes it extremely efficient — high
+  accuracy with low computation.
+
+Transfer Learning:
+  We use models pretrained on Kinetics-400 (a large-scale
+  human action dataset with 400 action classes). We replace
+  the final classification head (400 classes) with a new
+  4-class head for our judo throws and fine-tune the entire
+  network.
+
+We experimented with three X3D variants:
+
+  Variant    Parameters    Description
+  -------    ----------    -----------
+  X3D-XS     2.98M        Extra small — lightest
+  X3D-S      3.76M        Small
+  X3D-M      3.79M        Medium — deeper temporal modeling
+
+
+5. TRAINING STRATEGY & HYPERPARAMETERS (DETAILED)
+------------------------------------------------------------
+Training configuration:
+
+  Hyperparameter     Value
+  --------------     -----
+  Optimizer          Adam
+  Learning rate      0.0001 (1e-4)
+  Weight decay       0.0001 (1e-4)
+  LR scheduler       ReduceLROnPlateau (patience=5, factor=0.1)
+  Epochs             25
+  Batch size         2 (micro), 4 (effective with accum)
+  Grad accumulation  2 steps
+  Loss function      Cross-entropy
+  Early stopping     Patience of 10 epochs
+  Checkpointing      Best validation accuracy
+  Seed               42
+  GPU                NVIDIA GeForce GTX 1660 Ti (6GB)
+
+HYPERPARAMETER EXPLANATIONS:
+
+  a) Adam Optimizer
+     Adam (Adaptive Moment Estimation) is an optimization
+     algorithm that computes individual adaptive learning
+     rates for each parameter. It combines the benefits of
+     two other optimizers: AdaGrad (adapts learning rate per
+     parameter) and RMSProp (uses moving average of squared
+     gradients). Adam maintains two running averages per
+     parameter — the mean and variance of recent gradients —
+     which allows it to converge faster than standard SGD.
+     It is the standard choice for fine-tuning pretrained
+     deep learning models.
+
+  b) Learning Rate = 0.0001 (1e-4)
+     The learning rate controls how large of a step the
+     optimizer takes when updating weights. For fine-tuning
+     a pretrained model, we use a small LR because:
+       - The backbone already has good weights from
+         Kinetics-400 pretraining
+       - A large LR would destroy those learned features
+       - A small LR makes gentle adjustments to adapt
+         general video features to judo-specific features
+     If LR is too high: model diverges or loses pretrained
+     knowledge. If too low: training is extremely slow.
+
+  c) Weight Decay = 0.0001 (1e-4)
+     Weight decay is a form of L2 regularization. It adds
+     a penalty proportional to the squared magnitude of the
+     weights to the loss function. This discourages the
+     model from assigning very large values to any single
+     weight, which helps prevent overfitting. Essentially,
+     it forces the model to distribute information across
+     many parameters rather than relying heavily on a few.
+
+  d) ReduceLROnPlateau (patience=5, factor=0.1)
+     This learning rate scheduler monitors the validation
+     loss after each epoch. If the validation loss does not
+     improve for 5 consecutive epochs (patience=5), the
+     scheduler multiplies the learning rate by 0.1 (divides
+     by 10). This allows the model to:
+       - Start with a larger LR for fast initial learning
+       - Automatically switch to a smaller LR for fine-
+         tuning when progress stalls
+     In our training, the LR dropped from 1e-4 to 1e-5 at
+     epoch 14, which helped push validation accuracy from
+     87% to 91%.
+
+  e) Batch Size = 2 (micro), Effective = 4
+     Batch size is how many video clips are processed in
+     one forward pass before updating weights. Larger batch
+     sizes provide more stable gradient estimates but
+     require more GPU memory. Video tensors are very large
+     (3 x 16 x 224 x 224 per clip), so our 6GB GPU can
+     only fit 2 clips at a time (micro batch = 2).
+
+  f) Gradient Accumulation = 2 steps
+     To simulate a larger batch size without needing more
+     GPU memory, we use gradient accumulation. Instead of
+     updating weights after every forward pass, we:
+       1. Process micro batch of 2 videos (forward + backward)
+       2. Accumulate gradients (do NOT update weights yet)
+       3. Process another micro batch of 2 videos
+       4. Now update weights with the accumulated gradients
+     This gives an effective batch size of 2 x 2 = 4, as
+     if we had processed 4 videos at once. The loss is
+     scaled by 1/accum_steps so gradient magnitudes match
+     what a true batch of 4 would produce.
+
+  g) Cross-Entropy Loss
+     The standard loss function for multi-class classification.
+     It measures the difference between the model's predicted
+     probability distribution and the true distribution
+     (one-hot label). Cross-entropy penalizes confident wrong
+     predictions heavily — if the model says 90% O Goshi but
+     the true class is Uchi Mata, the loss is very high.
+     Mathematically: Loss = -log(predicted probability of
+     the true class).
+
+  h) Early Stopping (patience = 10)
+     Monitors validation accuracy each epoch. If there is no
+     improvement for 10 consecutive epochs, training stops
+     automatically. This prevents:
+       - Wasting training time after the model has converged
+       - Overfitting by training too long
+     In our case, X3D-XS ran all 25 epochs without early
+     stopping triggering, meaning it kept finding better
+     solutions (best at epoch 21).
+
+  i) Seed = 42
+     A random seed ensures reproducibility. By setting the
+     same seed for Python's random module, NumPy, and PyTorch
+     (including CUDA), we guarantee the same weight
+     initialization, data shuffling order, and dropout
+     patterns across runs. This makes experiments comparable.
+
+  j) Epochs = 25
+     One epoch is one complete pass through all 598 training
+     videos. 25 epochs means the model sees each training
+     video 25 times. With each pass, the model refines its
+     understanding of the visual patterns that distinguish
+     each throw. Too few epochs = underfitting (not enough
+     learning). Too many = overfitting (memorization).
+
+
+6. CODE WALKTHROUGH
+------------------------------------------------------------
+The project is organized into modular Python files:
+
+  configs/config.py  — All hyperparameters in one place
+  src/dataset.py     — Video loading and preprocessing
+  src/model.py       — X3D model construction
+  src/evaluate.py    — Test evaluation and plot generation
+  train_model.py     — Main training script
+
+  a) configs/config.py — Configuration
+
+     This file centralizes every hyperparameter and path.
+     Key settings:
+       CLASS_NAMES = ["ippon_seoi_nage", "o_goshi",
+                      "osoto_gari", "uchi_mata"]
+       NUM_FRAMES = 16       (temporal window)
+       CROP_SIZE = 224       (spatial resolution)
+       MEAN = [0.45, 0.45, 0.45]   (Kinetics normalization)
+       STD = [0.225, 0.225, 0.225]
+       DEVICE = "cuda" if GPU available, else "cpu"
+
+     Why centralize? Changing a setting in one place
+     automatically applies everywhere — no risk of
+     mismatched values across files.
+
+  b) src/dataset.py — Video Loading Pipeline
+
+     JudoThrowsDataset (PyTorch Dataset class):
+
+     Step 1 - Scan folders:
+       Reads the folder structure:
+         judo_throws_dataset/train/ippon_seoi_nage/*.mp4
+         judo_throws_dataset/train/o_goshi/*.mp4
+         ...
+       Each subfolder name is the class label. Builds a
+       list of (video_path, class_index) pairs.
+
+     Step 2 - Decode video (decode_video function):
+       Uses PyAV (a fast C-based video decoder, ~3x faster
+       than OpenCV) to open each video file and extract all
+       frames. Then applies UNIFORM TEMPORAL SAMPLING:
+         - If video has 90 frames and we need 16, we pick
+           evenly spaced indices: [0, 5, 11, 16, 22, ...]
+         - This ensures we see the FULL throw motion, not
+           just the beginning or end
+         - If video is shorter than 16 frames, we repeat
+           the last frame to pad
+
+     Step 3 - Convert to tensor:
+       numpy array (T, H, W, C) uint8 [0-255]
+       → torch tensor (T, C, H, W) float32 [0.0-1.0]
+       This rearranges dimensions and normalizes pixel
+       values to the 0-1 range.
+
+     Step 4 - Apply spatial transforms:
+       For TRAINING split:
+         1. Resize shortest side to 256 pixels
+         2. Random crop to 224x224 (augmentation)
+         3. Random horizontal flip, 50% probability
+         4. Normalize with Kinetics mean/std
+       For VAL/TEST splits:
+         1. Resize shortest side to 256 pixels
+         2. Center crop to 224x224 (deterministic)
+         3. Normalize with Kinetics mean/std
+
+       Why different? Training augmentation creates variety
+       so the model doesn't memorize specific crops or
+       orientations. Val/test must be deterministic for
+       fair, reproducible evaluation.
+
+     Step 5 - Final rearrangement:
+       (T, C, H, W) → (C, T, H, W)
+       X3D expects channels-first format with temporal
+       dimension second.
+
+     get_dataloaders function:
+       Wraps datasets into PyTorch DataLoaders which handle:
+       - Batching (groups of BATCH_SIZE videos)
+       - Shuffling (train only, randomizes order each epoch)
+       - Pin memory (faster GPU transfer)
+       - Drop last (skips incomplete final training batch
+         for consistent BatchNorm behavior)
+
+  c) src/model.py — Model Construction
+
+     build_model function:
+
+     Step 1 - Load pretrained X3D:
+       Uses torch.hub.load() to download X3D architecture
+       and Kinetics-400 pretrained weights from Facebook's
+       PyTorchVideo repository. This gives us a model that
+       already understands general video features (edges,
+       textures, body movements, action primitives).
+
+     Step 2 - Replace classification head:
+       The pretrained model ends with:
+         Linear(2048, 400) — for 400 Kinetics classes
+       We replace this with:
+         Linear(2048, 4) — for our 4 judo throw classes
+       The new layer is randomly initialized and will learn
+       our judo-specific classification from scratch, while
+       the backbone provides pretrained feature extraction.
+
+       Accessed via: model.blocks[5].proj (PyTorchVideo's
+       X3D head is at block index 5)
+
+     Step 3 - Freeze/unfreeze backbone:
+       FREEZE_BACKBONE = False in our config, meaning ALL
+       parameters are trainable (full fine-tuning). This
+       allows the backbone to adapt its general features to
+       judo-specific patterns. With FREEZE_BACKBONE = True,
+       only the 4-class head would train (faster but less
+       accurate).
+
+     Step 4 - Move to GPU:
+       model.to(DEVICE) transfers all model weights from
+       CPU RAM to GPU VRAM for accelerated computation.
+
+  d) train_model.py — Training Loop
+
+     main function:
+
+     1. Parse arguments:
+        --model x3d_xs  (which X3D variant)
+        --batch-size 2  (micro batch per GPU step)
+        --accum-steps 2 (gradient accumulation)
+        --epochs 25     (total training epochs)
+        --lr 0.0001     (learning rate)
+
+     2. Set random seed for reproducibility.
+
+     3. Create dataloaders (train/val/test splits).
+
+     4. Build model (load pretrained + replace head).
+
+     5. Configure training components:
+        - criterion = CrossEntropyLoss()
+        - optimizer = Adam(model.parameters(), lr, weight_decay)
+        - scheduler = ReduceLROnPlateau(optimizer)
+
+     6. Training loop (for each epoch):
+        a) train_one_epoch_accum():
+           - Set model to train mode (enables dropout, BatchNorm updates)
+           - For each micro batch:
+             > Forward pass: outputs = model(videos)
+             > Compute loss: loss = criterion(outputs, labels)
+             > Scale loss: loss_scaled = loss / accum_steps
+             > Backward pass: loss_scaled.backward()
+               (computes gradients and accumulates them)
+             > Every accum_steps batches: optimizer.step()
+               (update weights with accumulated gradients)
+               then optimizer.zero_grad() (reset gradients)
+
+        b) validate():
+           - Set model to eval mode (disables dropout)
+           - torch.no_grad() context (skip gradient computation)
+           - Forward pass only — compute loss and accuracy
+           - No weight updates — purely measurement
+
+        c) scheduler.step(val_loss)
+           - Feed validation loss to the LR scheduler
+           - If val_loss hasn't improved for 5 epochs, reduce LR
+
+        d) Checkpoint best model:
+           - If val_acc > best_val_acc, save model weights
+             to outputs/x3d_xs/best_model.pth
+           - Saves: epoch, model state, optimizer state,
+             val_acc, class_names, model_name
+           - This ensures we keep the BEST model, not
+             necessarily the last one
+
+        e) Early stopping check:
+           - Increment epochs_no_improve counter
+           - If counter >= 10, stop training early
+
+     7. Load best weights and run full_evaluation on test set.
+
+  e) src/evaluate.py — Evaluation & Visualization
+
+     full_evaluation function runs after training:
+
+     1. evaluate_model():
+        - Runs model on all 101 test videos
+        - Collects predictions, true labels, and softmax
+          probability distributions
+        - Uses torch.no_grad() (no gradient computation
+          needed for inference)
+
+     2. Compute overall test accuracy:
+        accuracy = correct predictions / total predictions
+
+     3. Generate classification report (sklearn):
+        - Precision per class: Of all videos the model
+          predicted as this class, what % was correct?
+        - Recall per class: Of all actual videos of this
+          class, what % did the model correctly identify?
+        - F1-score: Harmonic mean of precision and recall
+          (balances both concerns)
+        - Saved to classification_report.txt
+
+     4. Plot confusion matrix:
+        - Grid showing true class vs predicted class
+        - Diagonal = correct predictions
+        - Off-diagonal = specific confusions
+        - Saved as confusion_matrix.png
+
+     5. Plot training curves:
+        - Two subplots: loss over epochs, accuracy over epochs
+        - Both show train (blue) and validation (red) lines
+        - The GAP between train and val reveals overfitting
+        - Saved as training_curves.png
+
+     6. Plot per-class accuracy:
+        - Bar chart showing accuracy for each throw class
+        - Reveals which throws are easy vs difficult
+        - Saved as per_class_accuracy.png
+
+
+7. RESULTS & MODEL COMPARISON
+------------------------------------------------------------
+
+  Model       Test Accuracy    Val Accuracy    Parameters
+  -----       -------------    ------------    ----------
+  X3D-XS      92.1%            91.2%           2.98M
+  X3D-S       88.1%            —               3.76M
+  X3D-M       75.2%            —               3.79M
+
+Key finding: The smallest model performed best.
+
+This is a classic case of the bias-variance tradeoff:
+
+  - X3D-M (largest) has enough capacity to memorize the 598
+    training videos. Training accuracy reaches 100%, but
+    validation accuracy oscillates around 70-75%. The
+    training curves show a large gap between training and
+    validation loss. This is severe overfitting.
+
+  - X3D-S (medium) shows moderate overfitting but still
+    generalizes well at 88.1%.
+
+  - X3D-XS (smallest) has just enough capacity to learn the
+    distinguishing features of each throw without memorizing
+    the training data. It generalizes best.
+
+Lesson: With only ~150 videos per class, model complexity
+must match dataset size. Bigger is not always better.
+
+
+Per-class analysis (X3D-XS, best model):
+
+  Class               Precision  Recall   F1-Score
+  -----               ---------  ------   --------
+  Ippon Seoi Nage     77.4%      96.0%    85.7%
+  O Goshi             95.8%      95.8%    95.8%
+  Osoto Gari          100.0%     100.0%   100.0%
+  Uchi Mata           100.0%     72.7%    84.2%
+
+  Overall Accuracy:   92.1%
+  Macro Avg F1:       91.4%
+
+Analysis:
+  - Osoto Gari achieves perfect classification. Its leg sweep
+    motion is visually distinct from all other throws.
+  - O Goshi is near-perfect. The hip throw has a clear body
+    rotation pattern.
+  - Ippon Seoi Nage and Uchi Mata are sometimes confused.
+    Both involve the attacker turning their back to the
+    opponent. The difference is subtle: Uchi Mata uses an
+    inner thigh sweep while Ippon Seoi Nage uses a shoulder
+    pull.
+
+
+8. TRAINING PROGRESSION (X3D-XS)
+------------------------------------------------------------
+  Epoch   Train Loss   Train Acc   Val Loss   Val Acc
+  -----   ----------   ---------   --------   -------
+    1       1.26         46.0%       —          —
+    2       1.00         61.4%      0.93       59.8%
+    3       0.72         71.4%      0.61       78.4%
+    5       0.39         85.6%      0.45       84.3%
+    7       0.28         89.8%      0.40       87.3%
+   10       0.08         97.7%      0.41       86.3%
+   14       0.07         97.8%      0.47       90.2%
+   21       0.02         99.5%      0.44       91.2%  (best)
+   25       0.01         99.8%      0.53       89.2%
+
+The model converges steadily and the train-val gap is
+moderate — much healthier than X3D-M's severe divergence.
+The LR was reduced at epoch 14 (from 1e-4 to 1e-5), which
+helped push validation accuracy from 87% to 91%.
+
+
+9. DEPLOYMENT
+------------------------------------------------------------
+We built a full-stack web application to demonstrate the model:
+
+  - Backend: FastAPI (Python) serving the trained X3D model.
+    Accepts video file uploads or YouTube/TikTok URLs
+    (using yt-dlp for video download).
+
+  - Frontend: Next.js with a modern UI showing classification
+    results with confidence scores and side-by-side model
+    comparison.
+
+  - Hosting: Hugging Face Spaces (backend Docker container)
+    and Vercel (frontend).
+
+Users can upload a judo video or paste a video URL and get
+instant classification with per-class confidence scores.
+
+
+10. LIMITATIONS & FUTURE WORK
+------------------------------------------------------------
+Limitations:
+  - Small dataset (801 videos across 4 classes). More data
+    would improve generalization for all model sizes.
+  - Only 4 of the 67 recognized judo throws are covered.
+  - Videos are controlled clips, not real competition footage
+    with multiple athletes, variable camera angles, and
+    partial occlusions.
+
+Future work:
+  - Expand to more throw classes with a larger dataset.
+  - Apply advanced augmentation (mixup, temporal jittering,
+    CutMix).
+  - Test on real competition footage.
+  - Explore attention-based video models (e.g., Video
+    Swin Transformer, TimeSformer).
+  - Real-time classification from live video feeds.
+
+
+11. CONCLUSION
+------------------------------------------------------------
+We demonstrated that X3D-XS with transfer learning from
+Kinetics-400 achieves 92.1% test accuracy on judo throw
+classification from video, outperforming larger X3D-S (88.1%)
+and X3D-M (75.2%) variants.
+
+The key takeaway: when working with limited training data
+(~600 videos), smaller models generalize better than larger
+ones. Model complexity must be matched to dataset size to
+avoid overfitting.
+
