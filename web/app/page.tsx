@@ -42,6 +42,13 @@ const MODEL_DISPLAY: Record<
   string,
   { label: string; tag: string; accent: string; ring: string; accuracy: string }
 > = {
+  x3d_xs: {
+    label: "X3D-XS",
+    tag: "Extra Small · Lightest",
+    accent: "from-emerald-500 to-teal-600",
+    ring: "#10b981",
+    accuracy: "92.1%",
+  },
   x3d_s: {
     label: "X3D-S",
     tag: "Small · Fast",
@@ -70,6 +77,7 @@ interface ModelResult {
 }
 
 interface CompareResult {
+  x3d_xs: ModelResult;
   x3d_s: ModelResult;
   x3d_m: ModelResult;
   agree: boolean;
@@ -246,7 +254,7 @@ export default function Home() {
           Judo Throw Classifier
         </h1>
         <p className="text-[var(--text-muted)] mt-3 text-base sm:text-lg leading-relaxed">
-          Upload a video or paste a link — dual X3D models classify your throw
+          Upload a video or paste a link — three X3D models classify your throw
           in real time
         </p>
 
@@ -433,7 +441,7 @@ export default function Home() {
                 <span>
                   {mode === "url"
                     ? "Downloading & analysing…"
-                    : "Running both models…"}
+                    : "Running all models…"}
                 </span>
               </>
             ) : (
@@ -478,22 +486,20 @@ export default function Home() {
               {result.agree ? (
                 <span className="inline-flex items-center gap-2.5 glass px-6 py-3 rounded-full border-emerald-500/30 bg-emerald-500/5 text-emerald-400 text-sm font-semibold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-dot inline-block" />
-                  Both models agree:{" "}
-                  <strong>{CLASS_LABELS[result.x3d_s.predicted_class]}</strong>
+                  All models agree:{" "}
+                  <strong>{CLASS_LABELS[result.x3d_xs.predicted_class]}</strong>
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2.5 glass px-6 py-3 rounded-full border-amber-500/30 bg-amber-500/5 text-amber-400 text-sm font-semibold">
                   <span className="w-2 h-2 rounded-full bg-amber-400 pulse-dot inline-block" />
-                  Models disagree — X3D-S:{" "}
-                  {CLASS_LABELS[result.x3d_s.predicted_class]} vs X3D-M:{" "}
-                  {CLASS_LABELS[result.x3d_m.predicted_class]}
+                  Models disagree — check results below
                 </span>
               )}
             </div>
 
             {/* Model cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-fade-in animate-delay-200">
-              {(["x3d_s", "x3d_m"] as const).map((modelKey) => {
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 animate-fade-in animate-delay-200">
+              {(["x3d_xs", "x3d_s", "x3d_m"] as const).map((modelKey) => {
                 const r = result[modelKey];
                 const meta = MODEL_DISPLAY[modelKey];
                 const pctConf = r.confidence * 100;
@@ -603,28 +609,43 @@ export default function Home() {
             Training Analysis
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold mt-2 bg-gradient-to-r from-gray-900 to-gray-500 bg-clip-text text-transparent">
-            Why X3D-S Outperforms X3D-M
+            X3D Model Comparison: XS vs S vs M
           </h2>
           <p className="text-[var(--text-muted)] mt-3 max-w-2xl mx-auto leading-relaxed">
-            With only ~600 training videos (~150 per class), the larger X3D-M
-            model <strong className="text-amber-400">memorizes</strong> the
-            training data instead of learning generalizable patterns — a
+            With only ~600 training videos (~150 per class), the smallest
+            X3D-XS model <strong className="text-emerald-500">generalizes best</strong> at 92.1%.
+            The larger X3D-M <strong className="text-amber-400">memorizes</strong> the
+            training data instead of learning patterns — a
             classic case of <strong className="text-amber-400">overfitting</strong>.
           </p>
         </div>
 
         {/* Key stats comparison */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             {
-              model: "X3D-S",
-              acc: "88.1%",
-              verdict: "Recommended",
-              color: "from-cyan-500 to-blue-600",
+              model: "X3D-XS",
+              acc: "92.1%",
+              verdict: "Best",
+              color: "from-emerald-500 to-teal-600",
               tag: "text-emerald-400",
               tagBg: "bg-emerald-500/10 border-emerald-500/20",
               details: [
-                "Smaller capacity → less overfitting",
+                "Smallest model → best generalization",
+                "Healthy train-val gap",
+                "Best F1: Osoto Gari (1.00)",
+                "Weakest: Uchi Mata (recall 0.73)",
+              ],
+            },
+            {
+              model: "X3D-S",
+              acc: "88.1%",
+              verdict: "Good",
+              color: "from-cyan-500 to-blue-600",
+              tag: "text-cyan-400",
+              tagBg: "bg-cyan-500/10 border-cyan-500/20",
+              details: [
+                "Moderate capacity → slight overfitting",
                 "Smooth validation loss convergence",
                 "Best F1: Osoto Gari (0.98)",
                 "Weakest: Uchi Mata (recall 0.73)",
@@ -694,10 +715,12 @@ export default function Home() {
                 zero, but the validation loss remains high and oscillates wildly.
               </p>
               <p className="text-[var(--text-muted)] text-sm leading-relaxed">
-                <strong className="text-gray-800">X3D-S</strong>, being a
-                smaller model, has less capacity to memorize and is forced to
-                learn the actual throw patterns, resulting in much better
-                generalization (88.1% vs 75.2%).
+                <strong className="text-gray-800">X3D-XS</strong>, being the
+                smallest model, has the least capacity to memorize and is forced to
+                learn the actual throw patterns, resulting in the best
+                generalization (92.1%). <strong className="text-gray-800">X3D-S</strong> (88.1%)
+                shows moderate overfitting, while <strong className="text-gray-800">X3D-M</strong> (75.2%)
+                suffers severely.
               </p>
             </div>
           </div>
@@ -710,8 +733,9 @@ export default function Home() {
             Notice how X3D-M&apos;s validation loss (red) oscillates and never
             converges, while X3D-S shows much smoother learning.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
+              { key: "x3d_xs", label: "X3D-XS" },
               { key: "x3d_s", label: "X3D-S" },
               { key: "x3d_m", label: "X3D-M" },
             ].map((m) => (
@@ -738,11 +762,12 @@ export default function Home() {
         <div>
           <h3 className="text-xl font-bold mb-1">Confusion Matrices</h3>
           <p className="text-[var(--text-muted)] text-sm mb-5">
-            X3D-S makes fewer misclassifications across all classes. X3D-M
+            X3D-XS makes the fewest misclassifications. X3D-M
             particularly struggles with O Goshi (F1 = 0.57).
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
+              { key: "x3d_xs", label: "X3D-XS" },
               { key: "x3d_s", label: "X3D-S" },
               { key: "x3d_m", label: "X3D-M" },
             ].map((m) => (
@@ -769,11 +794,12 @@ export default function Home() {
         <div>
           <h3 className="text-xl font-bold mb-1">Per-Class Accuracy</h3>
           <p className="text-[var(--text-muted)] text-sm mb-5">
-            X3D-S achieves consistent performance across all four throw types,
+            X3D-XS achieves the best overall per-class performance,
             while X3D-M drops significantly on O Goshi.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
+              { key: "x3d_xs", label: "X3D-XS" },
               { key: "x3d_s", label: "X3D-S" },
               { key: "x3d_m", label: "X3D-M" },
             ].map((m) => (
@@ -802,8 +828,18 @@ export default function Home() {
           <p className="text-[var(--text-muted)] text-sm mb-5">
             Full precision, recall, and F1 scores for each throw class.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
+              {
+                model: "X3D-XS (92.1%)",
+                accent: "from-emerald-500 to-teal-600",
+                rows: [
+                  { cls: "Ippon Seoi Nage", p: "0.77", r: "0.96", f1: "0.86" },
+                  { cls: "O Goshi", p: "0.96", r: "0.96", f1: "0.96" },
+                  { cls: "Osoto Gari", p: "1.00", r: "1.00", f1: "1.00" },
+                  { cls: "Uchi Mata", p: "1.00", r: "0.73", f1: "0.84" },
+                ],
+              },
               {
                 model: "X3D-S (88.1%)",
                 accent: "from-cyan-500 to-blue-600",
@@ -875,7 +911,7 @@ export default function Home() {
           </div>
           <p className="text-[var(--text-muted)] text-sm mt-4 leading-relaxed">
             The dataset contains short video clips of four judo throw techniques.
-            With ~150 videos per class, simpler architectures like X3D-S generalize
+            With ~150 videos per class, simpler architectures like X3D-XS generalize
             significantly better than larger models that tend to overfit.
           </p>
         </div>
@@ -887,7 +923,7 @@ export default function Home() {
           DATA.ML.330 Media Analysis — Group 4
         </p>
         <p className="text-[var(--text-muted)]/30 text-[10px] mt-1 font-mono">
-          X3D-S (88.1%) · X3D-M (75.2%) · PyTorch + FastAPI + Next.js
+          X3D-XS (92.1%) · X3D-S (88.1%) · X3D-M (75.2%) · PyTorch + FastAPI + Next.js
         </p>
       </footer>
     </main>

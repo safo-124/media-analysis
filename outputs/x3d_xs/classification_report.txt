@@ -1,0 +1,12 @@
+Test Accuracy: 0.9208
+
+                 precision    recall  f1-score   support
+
+Ippon Seoi Nage     0.7742    0.9600    0.8571        25
+        O Goshi     0.9583    0.9583    0.9583        24
+     Osoto Gari     1.0000    1.0000    1.0000        30
+      Uchi Mata     1.0000    0.7273    0.8421        22
+
+       accuracy                         0.9208       101
+      macro avg     0.9331    0.9114    0.9144       101
+   weighted avg     0.9342    0.9208    0.9203       101

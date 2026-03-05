@@ -46,7 +46,7 @@ from src.model import build_model
 # =============================================================================
 app = FastAPI(
     title="Judo Throws Classifier",
-    description="Upload a judo video and compare X3D-S vs X3D-M predictions.",
+    description="Upload a judo video and compare X3D-XS vs X3D-S vs X3D-M predictions.",
     version="2.0.0",
 )
 
@@ -62,20 +62,26 @@ app.add_middleware(
 # =============================================================================
 # Model loading — both X3D-S and X3D-M (done once at startup)
 # =============================================================================
-MODELS: dict = {}  # {"x3d_s": model, "x3d_m": model}
+MODELS: dict = {}  # {"x3d_xs": model, "x3d_s": model, "x3d_m": model}
 
 MODEL_META = {
+    "x3d_xs": {
+        "name": "X3D-XS",
+        "checkpoint": os.path.join(PROJECT_ROOT, "outputs", "x3d_xs", "best_model.pth"),
+        "test_accuracy": 0.9208,
+        "params": "2.98M",
+    },
     "x3d_s": {
         "name": "X3D-S",
         "checkpoint": os.path.join(PROJECT_ROOT, "outputs", "x3d_s", "best_model.pth"),
         "test_accuracy": 0.8812,
-        "params": "2.98M",
+        "params": "3.76M",
     },
     "x3d_m": {
         "name": "X3D-M",
         "checkpoint": os.path.join(PROJECT_ROOT, "outputs", "x3d_m", "best_model.pth"),
         "test_accuracy": 0.7525,
-        "params": "2.98M",
+        "params": "3.79M",
     },
 }
 
@@ -251,10 +257,11 @@ async def predict(
 @app.post("/compare")
 async def compare(file: UploadFile = File(...)):
     """
-    Run BOTH models on the same video and return side-by-side results.
+    Run ALL loaded models on the same video and return side-by-side results.
 
     Returns:
         {
+            "x3d_xs": { predicted_class, confidence, scores, inference_ms },
             "x3d_s": { predicted_class, confidence, scores, inference_ms },
             "x3d_m": { predicted_class, confidence, scores, inference_ms },
             "agree": true/false
@@ -439,7 +446,7 @@ async def predict_url(body: URLRequest):
 
 @app.post("/compare-url")
 async def compare_url(body: CompareURLRequest):
-    """Run BOTH models on a video URL and return side-by-side results."""
+    """Run ALL loaded models on a video URL and return side-by-side results."""
     tmp_path = _download_video(body.url)
     try:
         tensor = preprocess(tmp_path)
